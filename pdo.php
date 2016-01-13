@@ -12,7 +12,7 @@ class mypdo{
 	public $con = null;
 	
 	function __construct (){
-		$this->db_connect();
+		return $this->db_connect();
 	}
 	
 	public function db_connect(){
@@ -21,6 +21,7 @@ class mypdo{
 			$db_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 			$db_conn->query('SET NAMES UTF8');
 			$db_conn->query("set time_zone = '+8:00'");
+			return $this->con = $db_conn;
 		}catch(PDOException $e){
 			echo '與資料庫連線發生錯誤!: <br />';
 			echo '<pre>';
@@ -32,7 +33,11 @@ class mypdo{
 	}
 	
 	public function query($sql,$query_data=[]){
-		$db_conn = $this->db_connect();
+		if($this->con == null){
+			$db_conn = $this->db_connect();
+		}else{
+			$db_conn = $this->con;
+		}
 		$stmt = $db_conn->prepare($sql);
 		
 		if($stmt){
@@ -90,16 +95,38 @@ class mypdo{
 	
 	
 	public function db_update($sql,$query_data=[]){
-		$db_conn = $this->db_connect();
-		$stmt = $db_conn->prepare($sql);
-		if($stmt){
-			$stmt->execute($query_data);
-			
-			echo $stmt->rowCount();
+		
+		$sql_type = explode(" ",$sql);
+		
+		if($this->con == null){
+			$db_conn = $this->db_connect();
 		}else{
-			echo "Error：<br>";
-			print_r($db_conn->errorInfo());
+			$db_conn = $this->con;
 		}
+		$stmt = $db_conn->prepare($sql);
+		if($sql_type[0] == 'INSERT'){
+			if($stmt){
+				$stmt->execute($query_data);
+				return $db_conn->lastInsertId();
+			}else{
+				echo "Error：<br>";
+				print_r($db_conn->errorInfo());
+			}
+		}
+		if($sql_type[0] == 'UPDATE' || $sql_type[0] == 'DELETE'){
+			if($stmt){
+				$status = $stmt->execute($query_data);
+				if($status){
+					return true;
+				}else{
+					return false;
+				}
+			}else{
+				echo "Error：<br>";
+				print_r($db_conn->errorInfo());
+			}
+		}
+
 	}
 	
 
@@ -115,7 +142,7 @@ class mypdo{
 		$value_str=implode(",",$value_arr);
 		$sql = "INSERT INTO {$db_name} ($field_str) values($value_str)";
 		
-		$this->db_update($sql,$query_data);
+		return $this->db_update($sql,$query_data);
 	}
 	public function update($db_name,$arr=[],$where_arr=[]){
 		$update_str = "";
