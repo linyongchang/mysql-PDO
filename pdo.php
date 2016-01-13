@@ -95,7 +95,7 @@ class mypdo{
 	
 	
 	public function db_update($sql,$query_data=[]){
-		
+		// prex($sql);
 		$sql_type = explode(" ",$sql);
 		
 		if($this->con == null){
@@ -115,9 +115,11 @@ class mypdo{
 		}
 		if($sql_type[0] == 'UPDATE' || $sql_type[0] == 'DELETE'){
 			if($stmt){
-				$status = $stmt->execute($query_data);
-				if($status){
+				$stmt->execute($query_data);
+				$status = $stmt->rowCount();
+				if($status != 0){
 					return true;
+					
 				}else{
 					return false;
 				}
@@ -152,13 +154,13 @@ class mypdo{
 			$query_data[":$key"] = $val;
 		}
 		foreach($where_arr as $key=>$val){
-			$where_str = $where_str." AND $key=$val";
+			$where_str = $where_str." AND $key='$val'";
 		}
 		$where_str = substr($where_str, 5);
 		$update_str = substr($update_str,1);
 		$sql = "UPDATE `{$db_name}` SET $update_str WHERE $where_str";
 		
-		$this->db_update($sql,$query_data);
+		return $this->db_update($sql,$query_data);
 	}
 	public function delete($db_name,$arr){
 		$where_str = "";
