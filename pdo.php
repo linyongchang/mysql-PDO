@@ -9,6 +9,7 @@ class mypdo{
 	public $username = 'Chang';
 	public $password = '12345';
 	public $database = 'mrok';
+	public $con = null;
 	
 	function __construct (){
 		$this->db_connect();
